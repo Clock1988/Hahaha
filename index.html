@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>專屬接駕申請 🚗✨</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti for Celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mochiyom+Pop+One&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #fff0f5 0%, #e6e6fa 50%, #ffe4e1 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .font-cute {
+            font-family: 'Mochiyom Pop One', 'Noto Sans TC', cursive;
+        }
+
+        /* Background Particle Canvas */
+        #petal-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Glassmorphism Card Style */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 20px 40px rgba(230, 160, 190, 0.25), 0 8px 16px rgba(180, 140, 210, 0.15);
+        }
+
+        /* Soft Glow effects */
+        .glow-btn {
+            box-shadow: 0 8px 20px rgba(244, 114, 182, 0.4);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .glow-btn:hover {
+            box-shadow: 0 12px 28px rgba(244, 114, 182, 0.6);
+            transform: translateY(-2px) scale(1.03);
+        }
+
+        .glow-btn:active {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        /* Step Transitions */
+        .step-panel {
+            transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+        }
+
+        .step-hidden {
+            opacity: 0;
+            transform: translateY(20px) scale(0.96);
+            pointer-events: none;
+            position: absolute;
+            width: 100%;
+        }
+
+        .step-active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            position: relative;
+            width: 100%;
+        }
+
+        /* Floating animation for subtle elements */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(3deg); }
+        }
+
+        .animate-float {
+            animation: floatSlow 4s ease-in-out infinite;
+        }
+
+        /* Heart pulse animation */
+        @keyframes pulseHeart {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        .animate-pulse-heart {
+            animation: pulseHeart 1.5s ease-in-out infinite;
+        }
+
+        /* Vehicle selection option styling */
+        .vehicle-card {
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 2px solid rgba(244, 114, 182, 0.2);
+        }
+        .vehicle-card:hover {
+            border-color: rgba(244, 114, 182, 0.8);
+            transform: translateY(-4px);
+        }
+        .vehicle-card.selected {
+            background: linear-gradient(135deg, #fff0f5 0%, #fbcfe8 100%);
+            border-color: #ec4899;
+            box-shadow: 0 8px 20px rgba(236, 72, 153, 0.25);
+            transform: scale(1.03);
+        }
+
+        /* Service Confirmation Card Style */
+        .letter-paper {
+            background: #fffdfa;
+            background-image: radial-gradient(#fbcfe8 0.75px, transparent 0.75px);
+            background-size: 16px 16px;
+            border: 1px solid #fbcfe8;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4 sm:p-6 relative">
+
+    <canvas id="petal-canvas"></canvas>
+
+    <!-- Sound Toggle Button -->
+    <button id="sound-toggle" class="fixed top-5 right-5 z-50 bg-white/80 backdrop-blur-md p-3 rounded-full text-pink-500 shadow-lg hover:bg-white hover:scale-110 transition-all text-lg" title="音效開關">
+        <i class="fas fa-volume-up" id="sound-icon"></i>
+    </button>
+
+    <main class="w-full max-w-lg z-10 my-auto">
+        <!-- Floating decorative corner flowers -->
+        <div class="relative">
+            <div class="absolute -top-6 -left-6 text-4xl animate-float z-20 pointer-events-none">🌸</div>
+            <div class="absolute -top-6 -right-6 text-4xl animate-float z-20 pointer-events-none" style="animation-delay: 1.5s;">🌺</div>
+            <div class="absolute -bottom-6 -left-6 text-4xl animate-float z-20 pointer-events-none" style="animation-delay: 2s;">✨</div>
+            <div class="absolute -bottom-6 -right-6 text-4xl animate-float z-20 pointer-events-none" style="animation-delay: 0.8s;">🎀</div>
+
+            <!-- Main Interactive Card Container -->
+            <div id="main-card" class="glass-card rounded-3xl p-6 sm:p-8 relative overflow-hidden transition-all duration-500">
+                
+                <!-- Step Progress Dots -->
+                <div class="flex justify-center items-center gap-2 mb-6" id="progress-dots">
+                    <div class="dot w-5 h-2.5 rounded-full bg-pink-500 transition-all duration-300"></div>
+                    <div class="dot w-2.5 h-2.5 rounded-full bg-pink-200 transition-all duration-300"></div>
+                    <div class="dot w-2.5 h-2.5 rounded-full bg-pink-200 transition-all duration-300"></div>
+                    <div class="dot w-2.5 h-2.5 rounded-full bg-pink-200 transition-all duration-300"></div>
+                </div>
+
+                <!-- ================= STEP 1: PICKUP APPLICATION ================= -->
+                <section id="step-1" class="step-panel step-active text-center">
+                    <div class="mb-6">
+                        <span class="inline-block px-3 py-1 bg-pink-100 text-pink-600 rounded-full text-xs font-semibold tracking-wider mb-2">
+                            ✨ PICOVA EXCLUSIVE APPLICATION ✨
+                        </span>
+                        <h1 class="text-2xl sm:text-3xl font-bold font-cute text-pink-600 mt-2 flex items-center justify-center gap-2">
+                            要不要預約接駕？ <span class="animate-pulse-heart inline-block">✨</span>
+                        </h1>
+                        <p class="text-gray-500 text-sm mt-2">
+                            提交您的專屬接駕申請，專屬司機隨時為您服務～
+                        </p>
+                    </div>
+
+                    <!-- Animated Mascot Container -->
+                    <div class="relative w-44 h-44 mx-auto mb-6 flex items-center justify-center">
+                        <div class="absolute inset-0 bg-pink-200/50 rounded-full blur-xl animate-pulse"></div>
+                        <div class="relative text-7xl animate-float" id="mascot-emoji">
+                            🥺
+                        </div>
+                    </div>
+
+                    <!-- Interactive Buttons Container -->
+                    <div class="relative min-h-[140px] flex flex-col items-center justify-center gap-4" id="btn-container">
+                        <button id="btn-yes" class="glow-btn bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500 text-white font-bold py-3.5 px-8 rounded-full text-lg shadow-md flex items-center justify-center gap-2 z-20">
+                            <span>好哦 ✨</span>
+                        </button>
+                        
+                        <button id="btn-no" class="bg-gray-100 hover:bg-gray-200 text-gray-600 font-medium py-2.5 px-6 rounded-full text-sm shadow-sm transition-all duration-200 z-30">
+                            <span>No 🙈</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- ================= STEP 2: DATE SELECTION ================= -->
+                <section id="step-2" class="step-panel step-hidden text-center">
+                    <div class="mb-6">
+                        <span class="inline-block px-3 py-1 bg-purple-100 text-purple-600 rounded-full text-xs font-semibold tracking-wider mb-2">
+                            📅 STEP 02 / DATE
+                        </span>
+                        <h2 class="text-2xl font-bold font-cute text-pink-600 mt-1">
+                            選擇接駕申請日期 📅
+                        </h2>
+                        <p class="text-gray-500 text-sm mt-1">
+                            挑選一個好日子，為您提供最貼心的接接服務！
+                        </p>
+                    </div>
+
+                    <!-- Date Input Container -->
+                    <div class="bg-white/90 p-5 rounded-2xl shadow-inner border border-pink-100 mb-8 max-w-xs mx-auto">
+                        <label for="pickup-date" class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                            申請日期 Select Date
+                        </label>
+                        <input type="date" id="pickup-date" class="w-full bg-pink-50 border-2 border-pink-200 text-pink-600 font-bold text-lg rounded-xl px-4 py-3 text-center focus:outline-none focus:border-pink-400 transition-colors cursor-pointer">
+                        <div id="quick-date-chips" class="flex justify-center gap-2 mt-4">
+                            <button type="button" class="date-chip text-xs bg-pink-100 text-pink-600 px-3 py-1.5 rounded-full hover:bg-pink-200 transition-colors font-medium" data-days="0">今天</button>
+                            <button type="button" class="date-chip text-xs bg-purple-100 text-purple-600 px-3 py-1.5 rounded-full hover:bg-purple-200 transition-colors font-medium" data-days="1">明天</button>
+                            <button type="button" class="date-chip text-xs bg-rose-100 text-rose-600 px-3 py-1.5 rounded-full hover:bg-rose-200 transition-colors font-medium" data-days="7">下週末</button>
+                        </div>
+                    </div>
+
+                    <button id="btn-step2-next" class="glow-btn w-full bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500 text-white font-bold py-3.5 px-8 rounded-full text-lg shadow-md flex items-center justify-center gap-2">
+                        <span>就這天！✨</span>
+                        <i class="fas fa-arrow-right text-sm"></i>
+                    </button>
+                </section>
+
+                <!-- ================= STEP 3: VEHICLE SELECTION ================= -->
+                <section id="step-3" class="step-panel step-hidden text-center">
+                    <div class="mb-4">
+                        <span class="inline-block px-3 py-1 bg-pink-100 text-pink-600 rounded-full text-xs font-semibold tracking-wider mb-1">
+                            🚗 STEP 03 / TRANSPORT
+                        </span>
+                        <h2 class="text-2xl font-bold font-cute text-pink-600">
+                            選擇接駕申請載具 🚗
+                        </h2>
+                        <p class="text-gray-500 text-sm mt-1">
+                            請選擇您希望的接駕出行方式：
+                        </p>
+                    </div>
+
+                    <!-- Vehicle Options Grid -->
+                    <div class="grid grid-cols-2 gap-3 mb-6 text-left">
+                        <!-- Option 1: 11路 -->
+                        <div class="vehicle-card p-3.5 rounded-2xl bg-white/80 cursor-pointer flex flex-col justify-between" data-vehicle="11路 👣 (散步聊天)">
+                            <div class="text-3xl mb-1">👣</div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 text-sm">11路 (雙腳散步)</h3>
+                                <p class="text-xs text-gray-500 mt-0.5">輕鬆散步，吹吹風聊天</p>
+                            </div>
+                        </div>
+
+                        <!-- Option 2: 大奔 -->
+                        <div class="vehicle-card p-3.5 rounded-2xl bg-white/80 cursor-pointer flex flex-col justify-between selected" data-vehicle="大奔 🚘 (舒適專車)">
+                            <div class="text-3xl mb-1">🚘</div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 text-sm">大奔 (舒適專車)</h3>
+                                <p class="text-xs text-gray-500 mt-0.5">寬敞舒適，享受VIP禮遇</p>
+                            </div>
+                        </div>
+
+                        <!-- Option 3: 小奔 -->
+                        <div class="vehicle-card p-3.5 rounded-2xl bg-white/80 cursor-pointer flex flex-col justify-between" data-vehicle="小奔 🏎️ (靈巧兜風)">
+                            <div class="text-3xl mb-1">🏎️</div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 text-sm">小奔 (靈巧兜風)</h3>
+                                <p class="text-xs text-gray-500 mt-0.5">靈活快捷，穿梭不塞車</p>
+                            </div>
+                        </div>
+
+                        <!-- Option 4: 小驢 -->
+                        <div class="vehicle-card p-3.5 rounded-2xl bg-white/80 cursor-pointer flex flex-col justify-between" data-vehicle="小驢 🐴 (俏皮可愛)">
+                            <div class="text-3xl mb-1">🐴</div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 text-sm">小驢 (俏皮騎乘)</h3>
+                                <p class="text-xs text-gray-500 mt-0.5">滿滿趣味，一路歡笑連連</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="btn-step3-next" class="glow-btn w-full bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500 text-white font-bold py-3.5 px-8 rounded-full text-lg shadow-md flex items-center justify-center gap-2">
+                        <span>確認提交申請 ✨</span>
+                    </button>
+                </section>
+
+                <!-- ================= STEP 4: WARM SERVICE CONFIRMATION ================= -->
+                <section id="step-4" class="step-panel step-hidden text-center">
+                    <div class="mb-3">
+                        <span class="inline-block px-3 py-1 bg-emerald-100 text-emerald-600 rounded-full text-xs font-semibold tracking-wider mb-1">
+                            🎉 申請通過 / APPROVED
+                        </span>
+                        <h2 class="text-2xl font-bold font-cute text-pink-600">
+                            接駕申請成立！✨
+                        </h2>
+                    </div>
+
+                    <!-- Service Confirmation Card -->
+                    <div class="letter-paper p-5 sm:p-6 rounded-2xl shadow-sm text-left relative overflow-hidden mb-6 transform transition-transform duration-500 hover:scale-[1.01]">
+                        <!-- Seal Decor -->
+                        <div class="absolute -top-3 -right-3 w-12 h-12 bg-pink-400 rounded-full flex items-center justify-center text-white text-lg shadow-md border-2 border-white transform rotate-12">
+                            📋
+                        </div>
+
+                        <div class="text-xs text-pink-500 font-semibold mb-2 flex items-center gap-1">
+                            <i class="fas fa-check-circle text-pink-500"></i> 接駕預約確認單
+                        </div>
+
+                        <p class="text-gray-700 text-sm leading-relaxed mb-3">
+                            太棒了！您的專屬接駕申請已成功提交並通過審核！
+                        </p>
+
+                        <div class="bg-pink-50/80 p-3.5 rounded-xl border border-pink-200/60 text-xs space-y-2 mb-4">
+                            <div class="flex items-center text-gray-700">
+                                <span class="w-16 font-semibold text-pink-500">📅 出發日期:</span>
+                                <span id="summary-date" class="font-bold text-gray-800">2026-09-25</span>
+                            </div>
+                            <div class="flex items-center text-gray-700">
+                                <span class="w-16 font-semibold text-pink-500">🚗 指定載具:</span>
+                                <span id="summary-vehicle" class="font-bold text-gray-800">大奔 🚘</span>
+                            </div>
+                        </div>
+
+                        <div class="text-gray-700 text-xs leading-relaxed space-y-2 border-t border-pink-100 pt-3">
+                            <p class="font-bold text-pink-600 text-sm mb-1">💡 貼心司機服務承諾：</p>
+                            <div class="flex items-start gap-2">
+                                <span class="text-pink-400">✅</span>
+                                <span><b>準時到達：</b>絕對不放鴿子，提前抵達目的地等候。</span>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <span class="text-pink-400">✅</span>
+                                <span><b>補給備齊：</b>車上免費提供好喝的飲料與精選小零食。</span>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <span class="text-pink-400">✅</span>
+                                <span><b>舒適放鬆：</b>可自由點播喜歡的歌單，提供5星級乘車體驗！</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 text-right border-t border-pink-100 pt-3">
+                            <span class="text-xs text-gray-400 block">您的金牌專屬司機 敬上</span>
+                            <span class="text-xs font-bold text-pink-500 font-cute">✨ 期待為您服務，出發愉快！ ✨</span>
+                        </div>
+                    </div>
+
+                    <button id="btn-reset" class="glow-btn w-full bg-gradient-to-r from-purple-400 to-pink-400 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-3.5 px-8 rounded-full text-base shadow-md flex items-center justify-center gap-2">
+                        <i class="fas fa-redo-alt text-xs"></i>
+                        <span>再看一次 ✨</span>
+                    </button>
+                </section>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // State variables
+        let currentStep = 1;
+        let selectedVehicle = "大奔 🚘 (舒適專車)";
+        let selectedDate = "";
+        let dodgeCount = 0;
+        let soundEnabled = true;
+
+        // Emojis for mascot state
+        const mascotEmojis = ["🥺", "👉👈", "✨", "😊", "🥳"];
+
+        // Simple Audio Synthesizer using Web Audio API
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playCuteSound(type) {
+            if (!soundEnabled) return;
+            try {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'pop') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'dodge') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(150, now + 0.12);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                } else if (type === 'fanfare') {
+                    [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.type = 'sine';
+                        o.frequency.value = freq;
+                        o.connect(g);
+                        g.connect(audioCtx.destination);
+                        
+                        const startTime = now + (idx * 0.08);
+                        g.gain.setValueAtTime(0.15, startTime);
+                        g.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3);
+                        o.start(startTime);
+                        o.stop(startTime + 0.3);
+                    });
+                }
+            } catch (e) {
+                console.log("Audio play error", e);
+            }
+        }
+
+        // --- STEP SWITCHING LOGIC ---
+        function goToStep(stepNumber) {
+            playCuteSound('pop');
+            
+            // Hide all steps
+            for (let i = 1; i <= 4; i++) {
+                const stepEl = document.getElementById(`step-${i}`);
+                stepEl.classList.remove('step-active');
+                stepEl.classList.add('step-hidden');
+            }
+
+            // Show target step
+            const targetEl = document.getElementById(`step-${stepNumber}`);
+            targetEl.classList.remove('step-hidden');
+            targetEl.classList.add('step-active');
+
+            // Update progress indicator dots
+            const dots = document.querySelectorAll('#progress-dots .dot');
+            dots.forEach((dot, idx) => {
+                if (idx === stepNumber - 1) {
+                    dot.className = "dot w-5 h-2.5 rounded-full bg-pink-500 transition-all duration-300";
+                } else if (idx < stepNumber - 1) {
+                    dot.className = "dot w-2.5 h-2.5 rounded-full bg-pink-400 transition-all duration-300";
+                } else {
+                    dot.className = "dot w-2.5 h-2.5 rounded-full bg-pink-200 transition-all duration-300";
+                }
+            });
+
+            currentStep = stepNumber;
+
+            // Trigger confetti on final step
+            if (stepNumber === 4) {
+                triggerCelebration();
+            }
+        }
+
+        // --- STEP 1: DODGING NO BUTTON LOGIC ---
+        const btnNo = document.getElementById('btn-no');
+        const btnYes = document.getElementById('btn-yes');
+        const btnContainer = document.getElementById('btn-container');
+        const mascotEmoji = document.getElementById('mascot-emoji');
+
+        let yesScale = 1;
+
+        function dodgeNoButton() {
+            dodgeCount++;
+            playCuteSound('dodge');
+
+            // Increase Yes button size
+            yesScale += 0.22;
+            btnYes.style.transform = `scale(${yesScale})`;
+            
+            // Update mascot emoji
+            const emojiIndex = Math.min(dodgeCount, mascotEmojis.length - 1);
+            mascotEmoji.textContent = mascotEmojis[emojiIndex];
+
+            // Make No button absolute positioned if it isn't already
+            btnNo.style.position = 'absolute';
+
+            const containerRect = btnContainer.getBoundingClientRect();
+            const btnRect = btnNo.getBoundingClientRect();
+
+            const maxX = (containerRect.width / 2) - (btnRect.width / 2) - 10;
+            const maxY = 60;
+
+            const randomX = (Math.random() * maxX * 2) - maxX;
+            const randomY = (Math.random() * maxY * 2) - maxY;
+
+            btnNo.style.left = `calc(50% - ${btnRect.width / 2}px + ${randomX}px)`;
+            btnNo.style.top = `calc(50% - ${btnRect.height / 2}px + ${randomY}px)`;
+        }
+
+        btnNo.addEventListener('mouseenter', dodgeNoButton);
+        btnNo.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            dodgeNoButton();
+        });
+        btnNo.addEventListener('click', dodgeNoButton);
+
+        // Yes Button click -> Step 2
+        btnYes.addEventListener('click', () => {
+            goToStep(2);
+        });
+
+        // --- STEP 2: DATE PICKER LOGIC ---
+        const dateInput = document.getElementById('pickup-date');
+        
+        function formatDate(dateObj) {
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        const today = new Date();
+        dateInput.value = formatDate(today);
+        dateInput.min = formatDate(today);
+        selectedDate = dateInput.value;
+
+        document.querySelectorAll('.date-chip').forEach(chip => {
+            chip.addEventListener('click', (e) => {
+                playCuteSound('pop');
+                const daysToAdd = parseInt(e.target.getAttribute('data-days'));
+                const targetDate = new Date();
+                targetDate.setDate(today.getDate() + daysToAdd);
+                dateInput.value = formatDate(targetDate);
+            });
+        });
+
+        document.getElementById('btn-step2-next').addEventListener('click', () => {
+            selectedDate = dateInput.value || formatDate(today);
+            goToStep(3);
+        });
+
+        // --- STEP 3: VEHICLE SELECTION LOGIC ---
+        const vehicleCards = document.querySelectorAll('.vehicle-card');
+        vehicleCards.forEach(card => {
+            card.addEventListener('click', () => {
+                playCuteSound('pop');
+                vehicleCards.forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                selectedVehicle = card.getAttribute('data-vehicle');
+            });
+        });
+
+        document.getElementById('btn-step3-next').addEventListener('click', () => {
+            document.getElementById('summary-date').textContent = selectedDate;
+            document.getElementById('summary-vehicle').textContent = selectedVehicle;
+            goToStep(4);
+        });
+
+        // --- STEP 4: RESET LOGIC ---
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            dodgeCount = 0;
+            yesScale = 1;
+            btnYes.style.transform = 'scale(1)';
+            btnNo.style.position = 'relative';
+            btnNo.style.left = 'auto';
+            btnNo.style.top = 'auto';
+            mascotEmoji.textContent = mascotEmojis[0];
+            
+            goToStep(1);
+        });
+
+        function triggerCelebration() {
+            playCuteSound('fanfare');
+
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 80,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#f472b6', '#ec4899', '#c084fc', '#f43f5e']
+                });
+            }
+        }
+
+        // Sound toggle logic
+        const soundBtn = document.getElementById('sound-toggle');
+        const soundIcon = document.getElementById('sound-icon');
+        soundBtn.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            if (soundEnabled) {
+                soundIcon.className = 'fas fa-volume-up';
+                soundBtn.classList.remove('text-gray-400');
+                soundBtn.classList.add('text-pink-500');
+                playCuteSound('pop');
+            } else {
+                soundIcon.className = 'fas fa-volume-mute';
+                soundBtn.classList.remove('text-pink-500');
+                soundBtn.classList.add('text-gray-400');
+            }
+        });
+
+        // Background Petals Animation
+        const canvas = document.getElementById('petal-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const petals = [];
+        const petalColors = ['#ffb6c1', '#ffd1dc', '#e6e6fa', '#fbcfe8'];
+
+        class Petal {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = -20;
+                this.size = Math.random() * 8 + 6;
+                this.speedY = Math.random() * 1.2 + 0.8;
+                this.speedX = Math.random() * 0.8 - 0.4;
+                this.angle = Math.random() * 360;
+                this.spin = Math.random() * 2 - 1;
+                this.color = petalColors[Math.floor(Math.random() * petalColors.length)];
+                this.opacity = Math.random() * 0.6 + 0.3;
+            }
+
+            update() {
+                this.y += this.speedY;
+                this.x += Math.sin(this.y * 0.01) + this.speedX;
+                this.angle += this.spin;
+
+                if (this.y > canvas.height + 20) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate((this.angle * Math.PI) / 180);
+                ctx.globalAlpha = this.opacity;
+                ctx.fillStyle = this.color;
+
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.bezierCurveTo(this.size / 2, -this.size, this.size, -this.size / 3, 0, this.size);
+                ctx.bezierCurveTo(-this.size, -this.size / 3, -this.size / 2, -this.size, 0, 0);
+                ctx.fill();
+
+                ctx.restore();
+            }
+        }
+
+        for (let i = 0; i < 25; i++) {
+            petals.push(new Petal());
+            petals[i].y = Math.random() * canvas.height;
+        }
+
+        function animatePetals() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            petals.forEach(petal => {
+                petal.update();
+                petal.draw();
+            });
+            requestAnimationFrame(animatePetals);
+        }
+
+        window.onload = function() {
+            animatePetals();
+        };
+    </script>
+</body>
+</html>
